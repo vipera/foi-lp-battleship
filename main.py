@@ -6,6 +6,7 @@
 # Marin Rukavina <marin_at_shinyshell_dot_net>
 # 22.10.2013
 
+import requests
 import wx
 import pygame
 
@@ -16,6 +17,7 @@ import pyxf as xf
 import math
 import os, sys
 import re
+import webbrowser
 
 
 class BattleshipGame:
@@ -310,6 +312,7 @@ class BattleshipWindow(wx.Frame):
 	menu = {}
 	menuitem = {}
 	ime = None
+	rezultatpostavljen = False
 	
 	def __init__(self, parent, id, title = "Potapanje brodova", **options):
 		options['style'] = (wx.DEFAULT_FRAME_STYLE | wx.TRANSPARENT_WINDOW) & (~wx.RESIZE_BORDER)
@@ -335,9 +338,11 @@ class BattleshipWindow(wx.Frame):
 		self.menubar.Append(self.menu['player'], 'I&grač')
 		
 		# events
-		self.Bind(wx.EVT_MENU, self.onNewGame,		self.menuitem["newgame"])
-		self.Bind(wx.EVT_MENU, self.onExit,			self.menuitem["quit"])
-		self.Bind(wx.EVT_MENU, self.onCreateUser,	self.menuitem["changeuser"])
+		self.Bind(wx.EVT_MENU, self.onNewGame,			self.menuitem["newgame"])
+		self.Bind(wx.EVT_MENU, self.onExit,				self.menuitem["quit"])
+		self.Bind(wx.EVT_MENU, self.onCreateUser,		self.menuitem["changeuser"])
+		self.Bind(wx.EVT_MENU, self.onSubmitScore,		self.menuitem["submitscore"])
+		self.Bind(wx.EVT_MENU, self.onOpenLeaderBoard,	self.menuitem["viewleaderboard"])
 		
 		self.SetMenuBar(self.menubar)
 		
@@ -369,9 +374,30 @@ class BattleshipWindow(wx.Frame):
 		self.display.game.NewGame()
 		self.display.Redraw()
 		self.statusbox.Clear()
+		self.rezultatpostavljen = False
 
 	def onExit(self, event):
 		self.Close()
+
+	def onSubmitScore(self, event):
+		score = self.display.game.GameOver()
+
+		if self.ime is not None:
+			if score:
+				if not self.rezultatpostavljen:
+					# submitaj score
+					requests.get('http://shinyshell.net/foi-lp-battleship/submit.py?username=%s&score=%s' % (self.ime, score))
+					wx.MessageBox("Rezultat postavljen na ljestvicu!", 'Info', wx.OK | wx.ICON_INFORMATION)
+					self.rezultatpostavljen = True
+				else:
+					wx.MessageBox("Već ste postavili rezultat! Morate započeti novu igru.", 'Info', wx.OK | wx.ICON_EXCLAMATION)
+			else:
+				wx.MessageBox("Niste završili igru!", 'Info', wx.OK | wx.ICON_EXCLAMATION)
+		else:
+			wx.MessageBox("Niste unijeli svoje ime!", 'Info', wx.OK | wx.ICON_EXCLAMATION)
+
+	def onOpenLeaderBoard(self, event):
+		webbrowser.open("http://shinyshell.net/foi-lp-battleship")
 		
 	def onCreateUser(self, event):
 		dlg = wx.TextEntryDialog(None, "Unesite ime:", "Novi korisnik", " ")

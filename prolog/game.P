@@ -60,8 +60,8 @@ postavi_brodove :-
 postavi_brod(Ime, Velicina) :-
 	velicina_ploce(PS),
 	GranicaPocetneKoordinate is PS - Velicina + 1,
-	random(0, GranicaPocetneKoordinate, XStart),
-	random(0, GranicaPocetneKoordinate, YStart),
+	random(1, GranicaPocetneKoordinate, XStart),
+	random(1, GranicaPocetneKoordinate, YStart),
 	random(0, 2, Vertical),
 	(Vertical = 0 ->
 		XEnd is XStart + Velicina, YEnd is YStart
