@@ -1,0 +1,130 @@
+/**
+ * board.P
+ * 
+ * XSB-Prolog battleship by
+ * Marin Rukavina
+ */
+
+% Definicija igrače ploče - polje veličine 10x10.
+praznaploca([
+	[
+		polje( 1,  1, upitnik, prazno),
+		polje( 2,  1, upitnik, prazno),
+		polje( 3,  1, upitnik, prazno),
+		polje( 4,  1, upitnik, prazno),
+		polje( 5,  1, upitnik, prazno),
+		polje( 6,  1, upitnik, prazno),
+		polje( 7,  1, upitnik, prazno),
+		polje( 8,  1, upitnik, prazno),
+		polje( 9,  1, upitnik, prazno),
+		polje(10,  1, upitnik, prazno)
+	],
+	[
+		polje( 1,  2, upitnik, prazno),
+		polje( 2,  2, upitnik, prazno),
+		polje( 3,  2, upitnik, prazno),
+		polje( 4,  2, upitnik, prazno),
+		polje( 5,  2, upitnik, prazno),
+		polje( 6,  2, upitnik, prazno),
+		polje( 7,  2, upitnik, prazno),
+		polje( 8,  2, upitnik, prazno),
+		polje( 9,  2, upitnik, prazno),
+		polje(10,  2, upitnik, prazno)
+	],
+	[
+		polje( 1,  3, upitnik, prazno),
+		polje( 2,  3, upitnik, prazno),
+		polje( 3,  3, upitnik, prazno),
+		polje( 4,  3, upitnik, prazno),
+		polje( 5,  3, upitnik, prazno),
+		polje( 6,  3, upitnik, prazno),
+		polje( 7,  3, upitnik, prazno),
+		polje( 8,  3, upitnik, prazno),
+		polje( 9,  3, upitnik, prazno),
+		polje(10,  3, upitnik, prazno)
+	],
+	[
+		polje( 1,  4, upitnik, prazno),
+		polje( 2,  4, upitnik, prazno),
+		polje( 3,  4, upitnik, prazno),
+		polje( 4,  4, upitnik, prazno),
+		polje( 5,  4, upitnik, prazno),
+		polje( 6,  4, upitnik, prazno),
+		polje( 7,  4, upitnik, prazno),
+		polje( 8,  4, upitnik, prazno),
+		polje( 9,  4, upitnik, prazno),
+		polje(10,  4, upitnik, prazno)
+	],
+	[
+		polje( 1,  5, upitnik, prazno),
+		polje( 2,  5, upitnik, prazno),
+		polje( 3,  5, upitnik, prazno),
+		polje( 4,  5, upitnik, prazno),
+		polje( 5,  5, upitnik, prazno),
+		polje( 6,  5, upitnik, prazno),
+		polje( 7,  5, upitnik, prazno),
+		polje( 8,  5, upitnik, prazno),
+		polje( 9,  5, upitnik, prazno),
+		polje(10,  5, upitnik, prazno)
+	],
+	[
+		polje( 1,  6, upitnik, prazno),
+		polje( 2,  6, upitnik, prazno),
+		polje( 3,  6, upitnik, prazno),
+		polje( 4,  6, upitnik, prazno),
+		polje( 5,  6, upitnik, prazno),
+		polje( 6,  6, upitnik, prazno),
+		polje( 7,  6, upitnik, prazno),
+		polje( 8,  6, upitnik, prazno),
+		polje( 9,  6, upitnik, prazno),
+		polje(10,  6, upitnik, prazno)
+	],
+	[
+		polje( 1,  7, upitnik, prazno),
+		polje( 2,  7, upitnik, prazno),
+		polje( 3,  7, upitnik, prazno),
+		polje( 4,  7, upitnik, prazno),
+		polje( 5,  7, upitnik, prazno),
+		polje( 6,  7, upitnik, prazno),
+		polje( 7,  7, upitnik, prazno),
+		polje( 8,  7, upitnik, prazno),
+		polje( 9,  7, upitnik, prazno),
+		polje(10,  7, upitnik, prazno)
+	],
+	[
+		polje( 1,  8, upitnik, prazno),
+		polje( 2,  8, upitnik, prazno),
+		polje( 3,  8, upitnik, prazno),
+		polje( 4,  8, upitnik, prazno),
+		polje( 5,  8, upitnik, prazno),
+		polje( 6,  8, upitnik, prazno),
+		polje( 7,  8, upitnik, prazno),
+		polje( 8,  8, upitnik, prazno),
+		polje( 9,  8, upitnik, prazno),
+		polje(10,  8, upitnik, prazno)
+	],
+	[
+		polje( 1,  9, upitnik, prazno),
+		polje( 2,  9, upitnik, prazno),
+		polje( 3,  9, upitnik, prazno),
+		polje( 4,  9, upitnik, prazno),
+		polje( 5,  9, upitnik, prazno),
+		polje( 6,  9, upitnik, prazno),
+		polje( 7,  9, upitnik, prazno),
+		polje( 8,  9, upitnik, prazno),
+		polje( 9,  9, upitnik, prazno),
+		polje(10,  9, upitnik, prazno)
+	],
+	[
+		polje( 1, 10, upitnik, prazno),
+		polje( 2, 10, upitnik, prazno),
+		polje( 3, 10, upitnik, prazno),
+		polje( 4, 10, upitnik, prazno),
+		polje( 5, 10, upitnik, prazno),
+		polje( 6, 10, upitnik, prazno),
+		polje( 7, 10, upitnik, prazno),
+		polje( 8, 10, upitnik, prazno),
+		polje( 9, 10, upitnik, prazno),
+		polje(10, 10, upitnik, prazno)
+	]
+]).

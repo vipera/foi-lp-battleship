@@ -1,0 +1,215 @@
+/**
+ * game.P
+ * 
+ * XSB-Prolog battleship by
+ * Marin Rukavina
+ */
+
+:- import random/3 from random.
+:- import merge/3 from listutil.
+
+:- consult('/home/marin/Code/lp-battleship/prolog/board.P').
+
+:- dynamic ploca/1.
+:- dynamic statusbroda/2.
+
+% Veličina igrače ploče.
+velicina_ploce(10).
+
+% Brodovi u igri.
+brod(nosacaviona,	5).
+brod(borbenibrod,	4).
+brod(krstarica,		3).
+brod(podmornica,	3).
+brod(razarac,		2).
+
+% Dohvati n-ti element iz dane liste.
+nth1(1, [ X | _ ], X).
+nth1(I, [ _ | R ], X) :-
+    I > 1,
+    I2 is I - 1,
+    nth1(I2, R, X).
+
+% Dohvaća status (pogodak, upitnik, promasaj itd.) i brod za dano polje na danoj ploči.
+dohvati_poziciju(P, X, Y, Status, Brod) :-
+	!,
+	nth1(Y, P, Red),
+	nth1(X, Red, polje(_, _, Status, Brod)).
+dohvati_poziciju(X, Y, Status, Brod) :-
+	ploca(P),
+	dohvati_poziciju(P, X, Y, Status, Brod).
+
+% Probaj postaviti brodove na ploču (neuspjeh ako se preklapaju, treba ponoviti par puta).
+postavi_brodove(Ime, Velicina, Pokusaj) :-
+	postavi_brod(Ime, Velicina).
+postavi_brodove(Ime, Velicina, Pokusaj) :-
+	Pokusaj > 0,
+	Pokusaj1 is Pokusaj - 1,
+	postavi_brodove(Ime, Velicina, Pokusaj1).
+postavi_brodove :-
+	postavi_brodove(nosacaviona,	5, 10),
+	postavi_brodove(borbenibrod,	4, 10),
+	postavi_brodove(krstarica,		3, 10),
+	postavi_brodove(podmornica,		3, 10),
+	postavi_brodove(razarac,		2, 10),
+	!.
+postavi_brodove :-
+	postavi_brodove.
+
+% Probaj postaviti jedan brod veličine 'Velicina'.
+postavi_brod(Ime, Velicina) :-
+	velicina_ploce(PS),
+	GranicaPocetneKoordinate is PS - Velicina + 1,
+	random(0, GranicaPocetneKoordinate, XStart),
+	random(0, GranicaPocetneKoordinate, YStart),
+	random(0, 2, Vertical),
+	(Vertical = 0 ->
+		XEnd is XStart + Velicina, YEnd is YStart
+		;
+		XEnd is XStart, YEnd is YStart + Velicina
+	),
+	dobar_brod(Vertical, XStart, YStart, XEnd, YEnd),
+	zapisi_brod(Vertical, Ime, XStart, YStart, XEnd, YEnd).
+
+% Je li u redu zapisati brod ovdje.
+dobar_brod(0, X, YStart, X, YEnd).
+dobar_brod(0, XStart, Y, XEnd, Y) :-
+	dohvati_poziciju(XStart, Y, _, prazno),
+	X is XStart + 1,
+	dobar_brod(0, X, Y, XEnd, Y).
+dobar_brod(1, XStart, Y, XEnd, Y).
+dobar_brod(1, X, YStart, X, YEnd) :-
+	dohvati_poziciju(X, YStart, _, prazno),
+	Y is YStart + 1,
+	dobar_brod(0, X, Y, X, YEnd).
+
+% Zapiši horizontalni brod.
+zapisi_brod(0, Ime, X, YStart, X, YEnd). % brod je zapisan kad su obe X koordinate jednake
+zapisi_brod(0, Ime, XStart, Y, XEnd, Y) :-
+	% YEnd = YStart
+	XStart =< XEnd,
+	zapisi_brod_u_celiju(XStart, Y, Ime),
+	X is XStart + 1,
+	zapisi_brod(0, Ime, X, Y, XEnd, Y).
+% Zapiši vertikalni brod.
+zapisi_brod(1, Ime, XStart, Y, XEnd, Y). % brod je zapisan kad su obe Y koordinate jednake
+zapisi_brod(1, Ime, X, YStart, X, YEnd) :-
+	% XEnd = XStart
+	YStart =< YEnd,
+	zapisi_brod_u_celiju(X, YStart, Ime),
+	Y is YStart + 1,
+	zapisi_brod(1, Ime, X, Y, X, YEnd).
+
+% Zapiši brod 'ImeBroda' na poziciju X, Y.
+zapisi_brod_u_celiju(X, Y, ImeBroda) :-
+	ploca(P),
+	osvjezi(P, polje(X, Y, upitnik, ImeBroda), PNova),
+
+	% osvježi ploču
+	retractall(ploca(_)),
+	asserta(ploca(PNova)).
+
+% Istinit ako je dani brod potopljen.
+potopljen(Brod) :-
+	statusbroda(Brod, S),
+	S = 0.
+
+% Gađaj na poziciju X, Y. Istinit ako je pogođeno, lažno ako je već gađano ili je
+% riječ o promašaju (koristiti zajedno s vecgadjano/2 za najbolji učinak)
+gadjaj(X, Y, Brod) :-
+	not(vecgadjano(X, Y)),
+	dohvati_poziciju(X, Y, Status, Brod),
+
+	(not(Brod = prazno) ->
+		statusbroda(Brod, N),
+		postavi_status(X, Y, pogodak),
+		retractall(statusbroda(Brod, N)),
+		N1 is N - 1,
+		asserta(statusbroda(Brod, N1))
+		;
+		postavi_status(X, Y, promasaj)
+	),
+	not(Brod = prazno), % fail za promasaj, uspjeh za pogodak
+	!.
+
+igragotova(BrojGadjanja) :-
+	statusbroda(nosacaviona, 0),
+	statusbroda(borbenibrod, 0),
+	statusbroda(krstarica, 0),
+	statusbroda(podmornica, 0),
+	statusbroda(razarac, 0),
+
+	% igra je gotova, vrati broj gađanja tijekom igre
+	broj_pogodjenih_polja(BrojGadjanja).
+
+broj_pogodjenih_polja(N) :-
+	ploca(P),
+	broj_pogodjenih_polja(P, N).
+
+broj_pogodjenih_polja([[]], 0).
+broj_pogodjenih_polja([[polje(_, _, Status, _) | []] | R], N) :-
+	broj_pogodjenih_polja(R, N1),
+	(not(Status = upitnik) ->
+		N is N1 + 1
+		;
+		N is N1
+	).
+
+broj_pogodjenih_polja([[polje(_, _, Status, _) | H] | R], N) :-
+	broj_pogodjenih_polja([H | R], N1),
+	(not(Status = upitnik) ->
+		N is N1 + 1
+		;
+		N is N1
+	).
+	
+
+% Istinit ako se već gađalo na X, Y.
+vecgadjano(X, Y) :-
+	ploca(P),
+	dohvati_poziciju(P, X, Y, Status, _),
+	not(Status = upitnik).
+
+% Postavi status broda na poziciji X, Y.
+postavi_status(X, Y, Status) :-
+	ploca(P),
+	dohvati_poziciju(P, X, Y, _, Brod),
+	osvjezi(P, polje(X, Y, Status, Brod), NovaPloca),
+	retractall(ploca(P)),
+	asserta(ploca(NovaPloca)).
+
+% Zapiši novi zapis u matricu ploče na danu poziciju.
+osvjezi(P, polje(X, Y, Status, Brod), NovaPloca) :-
+	osvjezi(P, polje(X, Y, Status, Brod), NovaPloca, [], []).
+
+osvjezi([[ polje(X, Y, _, _) | RRow ] | RBoard ], polje(X, Y, Status, Brod), NovaPloca, [], []) :-
+	merge([ polje(X, Y, Status, Brod) ], RRow, T1),
+	merge([T1], RBoard, NovaPloca).
+osvjezi([[ polje(X, Y, _, _) | RRow ] | RBoard ], polje(X, Y, Status, Brod), NovaPloca, B4Row, B4Ploca) :-
+	merge(B4Row, [ polje(X, Y, Status, Brod) ], T1),
+	merge(T1, RRow, T2),
+	merge(B4Ploca, [T2], T3),
+	merge(T3, RBoard, NovaPloca).
+osvjezi([[ H | [] ] | R ], polje(X, Y, Status, Brod), NovaPloca, B4Row, B4Ploca) :-
+	merge(B4Row, [H], H1),
+	merge(B4Ploca, [H1], P1),
+	osvjezi(R, polje(X, Y, Status, Brod), NovaPloca, [], P1).
+osvjezi([[ H | T ] | R ], polje(X, Y, Status, Brod), NovaPloca, B4Row, B4Ploca) :-
+	merge(B4Row, [H], H1),
+	osvjezi([ T | R ], polje(X, Y, Status, Brod), NovaPloca, H1, B4Ploca).
+
+% Predikat koji inicijalizira početno stanje igre, uvijek istinit.
+start :-
+	retractall(ploca(_)),
+	retractall(statusbroda(_, _)),
+	
+	praznaploca(P),
+	asserta(ploca(P)),
+	
+	asserta(statusbroda(nosacaviona, 5)),
+	asserta(statusbroda(borbenibrod, 4)),
+	asserta(statusbroda(krstarica, 3)),
+	asserta(statusbroda(podmornica, 3)),
+	asserta(statusbroda(razarac, 2)),
+
+	postavi_brodove.
