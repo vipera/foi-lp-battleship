@@ -62,15 +62,15 @@ class BattleshipGame:
     if not res:
       return BattleshipHits.MISS
 
-    potopljen = self.xsb.query("potopljen(%s)" % res[0]["Brod"])
+    potopljen = self.xsb.query("potopljen(%s)" % res[0]['Brod'])
 
     if potopljen:
-      self.lastsunk = res[0]["Brod"]
+      self.lastsunk = res[0]['Brod']
       ploca = self.xsb.query("ploca(P)")
 
       for i in xrange(1, 10):
         for j in xrange(1, 10):
-          s = re.search("polje\(%d,%d,[a-z]+,([^\)]+)" % (j,i), ploca[0]["P"])
+          s = re.search("polje\(%d,%d,[a-z]+,([^\)]+)" % (j,i), ploca[0]['P'])
           if s is not None:
             if s.group(1) == res[0]["Brod"]:
               self.hits[i - 1][j - 1] = BattleshipHits.SUNK
@@ -80,7 +80,7 @@ class BattleshipGame:
   def GameOver(self):
     pok = self.xsb.query("igragotova(BrojPokusaja)")
     if pok:
-      return int(pok[0]["BrojPokusaja"])
+      return int(pok[0]['BrojPokusaja'])
     return False
 
   def IsUnknown(self, position):
@@ -192,7 +192,7 @@ class PygameDisplay(wx.Window):
         )
       )
 
-    verdanafont = pygame.font.Font("verdana.ttf", 16)
+    verdanafont = pygame.font.Font('verdana.ttf', 16)
 
     for i in xrange(10):
       offset = fieldinfo['margin'] + i * fieldinfo['cellsize']
@@ -221,7 +221,6 @@ class PygameDisplay(wx.Window):
         if cell is not BattleshipHits.UNKNOWN:
           self.BlitDot((rowindex + 1, cellindex + 1), cell)
 
-
     s = pygame.image.tostring(self.screen, 'RGB')  # Convert the surface to an RGB string
     img = wx.ImageFromData(self.size[0], self.size[1], s)  # Load this string into a wx image
     bmp = wx.BitmapFromImage(img)  # Get the image in bitmap form
@@ -244,15 +243,15 @@ class PygameDisplay(wx.Window):
       hitType = self.game.Fire(field)
 
       if hitType == BattleshipHits.MISS:
-        self.parent.AddToStatusBox(u"%s: Ništa nije pogođeno na %s%s." % (self.game.turns, field[0], field[1]))
+        self.parent.AddToStatusBox(u"%s: No hits at %s%s." % (self.game.turns, field[0], field[1]))
       elif hitType == BattleshipHits.HIT:
-        self.parent.AddToStatusBox(u"%s: Pogodak na %s%s!" % (self.game.turns, field[0], field[1]))
+        self.parent.AddToStatusBox(u"%s: Hit at %s%s!" % (self.game.turns, field[0], field[1]))
       elif hitType == BattleshipHits.SUNK:
-        self.parent.AddToStatusBox(u"%s: Potopljen brod \"%s\" pogotkom na %s%s!" % (self.game.turns, self.game.lastsunk.capitalize(), field[0], field[1]))
+        self.parent.AddToStatusBox(u"%s: Ship \"%s\" sunk with hit at %s%s!" % (self.game.turns, self.game.lastsunk.capitalize(), field[0], field[1]))
 
-      turnsWon = self.game.GameOver()
-      if turnsWon:
-        self.parent.AddToStatusBox(u"KRAJ: Pobijedili ste! Igra je završena u %d pokušaja!" % (turnsWon,))
+      winning_moves = self.game.GameOver()
+      if winning_moves:
+        self.parent.AddToStatusBox(u"END: You have won in %d moves!" % (winning_moves,))
 
 
   def CalculateField(self, x, y):
@@ -300,7 +299,7 @@ class PygameDisplay(wx.Window):
     margin = math.floor(self.size[0] / 10)
     cellsize = math.floor((self.size[0] - margin) / 10)
 
-    return { 'margin': margin, 'cellsize':cellsize }
+    return { 'margin': margin, 'cellsize': cellsize }
 
   def Kill(self, event):
     # Make sure Pygame can't be asked to redraw /before/ quitting by unbinding all methods which
@@ -310,15 +309,13 @@ class PygameDisplay(wx.Window):
     self.Unbind(event = wx.EVT_PAINT, handler = self.OnPaint)
     self.Unbind(event = wx.EVT_TIMER, handler = self.Update, source = self.timer)
 
-
-
 class BattleshipWindow(wx.Frame):
   menu = {}
   menuitem = {}
   ime = None
-  rezultatpostavljen = False
+  result_set = False
 
-  def __init__(self, parent, id, title = "Potapanje brodova", **options):
+  def __init__(self, parent, id, title='Battleship', **options):
     options['style'] = (wx.DEFAULT_FRAME_STYLE | wx.TRANSPARENT_WINDOW) & (~wx.RESIZE_BORDER)
     wx.Frame.__init__( *(self, parent, id, title), **options)
 
@@ -327,26 +324,14 @@ class BattleshipWindow(wx.Frame):
 
     # menubar
     self.menubar = wx.MenuBar()
-
     self.menu['game'] = wx.Menu()
-    self.menu['player'] = wx.Menu()
-
-    self.menuitem['newgame'] = self.menu['game'].Append(wx.NewId(), 'Nova igra', 'Započni novu igru')
-    self.menuitem['quit'] = self.menu['game'].Append(wx.NewId(), 'Izađi', 'Izađi iz aplikacije')
-    self.menuitem['changeuser'] = self.menu['player'].Append(wx.NewId(), 'Novi korisnik', 'Novi korisnik')
-    self.menuitem['submitscore'] = self.menu['player'].Append(wx.NewId(), 'Pošalji rezultat na ljestvicu', 'Pošalji rezultat na ljestvicu')
-    self.menuitem['viewleaderboard'] = self.menu['player'].Append(wx.NewId(), 'Posjeti ljestvicu', 'Posjeti ljestvicu')
-
-
-    self.menubar.Append(self.menu['game'], '&Igra')
-    self.menubar.Append(self.menu['player'], 'I&grač')
+    self.menuitem['newgame'] = self.menu['game'].Append(wx.NewId(), 'New game', 'Start a new game')
+    self.menuitem['quit'] = self.menu['game'].Append(wx.NewId(), 'Exit', 'Exit the application')
+    self.menubar.Append(self.menu['game'], '&Game')
 
     # events
-    self.Bind(wx.EVT_MENU, self.onNewGame,      self.menuitem["newgame"])
-    self.Bind(wx.EVT_MENU, self.onExit,        self.menuitem["quit"])
-    self.Bind(wx.EVT_MENU, self.onCreateUser,    self.menuitem["changeuser"])
-    self.Bind(wx.EVT_MENU, self.onSubmitScore,    self.menuitem["submitscore"])
-    self.Bind(wx.EVT_MENU, self.onOpenLeaderBoard,  self.menuitem["viewleaderboard"])
+    self.Bind(wx.EVT_MENU, self.onNewGame, self.menuitem['newgame'])
+    self.Bind(wx.EVT_MENU, self.onExit, self.menuitem['quit'])
 
     self.SetMenuBar(self.menubar)
 
@@ -378,45 +363,10 @@ class BattleshipWindow(wx.Frame):
     self.display.game.NewGame()
     self.display.Redraw()
     self.statusbox.Clear()
-    self.rezultatpostavljen = False
+    self.result_set = False
 
   def onExit(self, event):
     self.Close()
-
-  def onSubmitScore(self, event):
-    score = self.display.game.GameOver()
-
-    if self.ime is not None:
-      if score:
-        if not self.rezultatpostavljen:
-          # submitaj score
-          requests.get('http://shinyshell.net/foi-lp-battleship/submit.py?username=%s&score=%s' % (self.ime, score))
-          wx.MessageBox("Rezultat postavljen na ljestvicu!", 'Info', wx.OK | wx.ICON_INFORMATION)
-          self.rezultatpostavljen = True
-        else:
-          wx.MessageBox("Već ste postavili rezultat! Morate započeti novu igru.", 'Info', wx.OK | wx.ICON_EXCLAMATION)
-      else:
-        wx.MessageBox("Niste završili igru!", 'Info', wx.OK | wx.ICON_EXCLAMATION)
-    else:
-      wx.MessageBox("Niste unijeli svoje ime!", 'Info', wx.OK | wx.ICON_EXCLAMATION)
-
-  def onOpenLeaderBoard(self, event):
-    webbrowser.open("http://shinyshell.net/foi-lp-battleship")
-
-  def onCreateUser(self, event):
-    dlg = wx.TextEntryDialog(None, "Unesite ime:", "Novi korisnik", " ")
-    answer = dlg.ShowModal()
-
-    korisnikovoime = None
-    if answer == wx.ID_OK:
-      korisnikovoime = dlg.GetValue()
-      print korisnikovoime
-
-    dlg.Destroy()
-
-    if korisnikovoime is not None:
-      self.ime = korisnikovoime
-      self.menubar.SetMenuLabel(1, korisnikovoime)
 
 class MyApp(wx.App):
   def OnInit(self):
@@ -426,31 +376,3 @@ class MyApp(wx.App):
 
 app = MyApp(0)
 app.MainLoop()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
