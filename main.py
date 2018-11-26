@@ -21,13 +21,17 @@ import webbrowser
 
 
 class BattleshipGame:
-  XSB_PATH = "/home/marin/Software/XSB/bin/xsb"
   hits = [[0 for x in xrange(10)] for y in xrange(10)]
   turns = 0
   lastsunk = None
 
   def __init__(self):
-    self.xsb = xf.xsb(self.XSB_PATH)
+		xsbargs = {}
+		try:
+			xsbargs['path'] = os.environ['XSB_PATH']
+		except KeyError:
+			pass
+    self.xsb = xf.xsb(**xsbargs)
     self.xsb.load('prolog/game.P')
 
     self.NewGame()
